@@ -1,5 +1,7 @@
-To install:
-pip install pytest-playwright
+# To install:
+```
+pip install pytest-playwright \
 python -m playwright install
-To run: 
-python -m pytest --headed -s
+```
+# To run: 
+```python -m pytest --headed -s```
