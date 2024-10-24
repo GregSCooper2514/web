@@ -1,7 +1,7 @@
 import re
 from playwright.sync_api import Page
 from time import sleep
-
+import validators
 
 def test_example(page: Page) -> None:
     email = "meshareef19@gmail.com"
@@ -14,6 +14,7 @@ def test_example(page: Page) -> None:
     followCount = 0
     pendingCount = 0
     linkedInMemberCount = 0
+    connectLinkList = []
     # location = input("Enter the location(exactly how on the web site): ")
     # jobTile = input("Enter the job title: ")
     # company = input("Enter the company name: ")
@@ -54,62 +55,78 @@ def test_example(page: Page) -> None:
             link = page.evaluate("document.activeElement.href")
             page.keyboard.press("Tab")
             sleep(0.4)
-            button = page.locator("document.activeElement")
             button_text = page.evaluate("document.activeElement.innerText")
             if button_text not in ["Message", "Connect", "Follow", "Pending"]:
                 page.keyboard.press("Tab")
                 sleep(0.4)
-                button = page.locator("document.activeElement")
+                button_text = page.evaluate("document.activeElement.innerText")
+            if button_text == "":
+                page.keyboard.press("Tab")
+                sleep(0.4)
                 button_text = page.evaluate("document.activeElement.innerText")
             if button_text == "Message":
                 messageCount += 1
-                pass  # Nothing to do here
+                connectLinkList.append(link)
             elif button_text == "Connect":
                 connectCount += 1
-                # button.click()
-                # page.get_by_text("Connect").click()
-                # page.get_by_text("Send without a note").click()
-                pass
+                page.keyboard.press("Enter")
+                page.get_by_text("Send without a note").click()
             elif button_text == "Follow":
+                connectLinkList.append(link)
                 followCount += 1
-                pass  # Handle later
             elif button_text == "Pending":
                 pendingCount += 1
                 pass  # Nothing to do here
             sleep(0.5)
+        if remainder == 0 and a == numberOfPages - 1:
+            break
         page.get_by_label("Next").click()
         sleep(2)
     for a in range(remainder):
         page.keyboard.press("Tab")
         sleep(0.4)
         name = page.evaluate("document.activeElement.innerText")
+        if name == "LinkedIn Member":
+            linkedInMemberCount += 1
+            continue
         link = page.evaluate("document.activeElement.href")
         page.keyboard.press("Tab")
         sleep(0.4)
-        button = page.locator("document.activeElement")
         button_text = page.evaluate("document.activeElement.innerText")
+        if button_text not in ["Message", "Connect", "Follow", "Pending"]:
+            page.keyboard.press("Tab")
+            sleep(0.4)
+            button_text = page.evaluate("document.activeElement.innerText")
         if button_text == "":
             page.keyboard.press("Tab")
             sleep(0.4)
-            button = page.locator("document.activeElement")
             button_text = page.evaluate("document.activeElement.innerText")
         if button_text == "Message":
             messageCount += 1
-            pass  # Nothing to do here
+            connectLinkList.append(link)
         elif button_text == "Connect":
             connectCount += 1
-            # button.click()
-            # page.get_by_text("Connect").click()
-            # page.get_by_text("Send without a note").click()
-            pass
+            page.keyboard.press("Enter")
+            page.get_by_text("Send without a note").click()
         elif button_text == "Follow":
+            connectLinkList.append(link)
             followCount += 1
-            pass  # Handle later
         elif button_text == "Pending":
             pendingCount += 1
             pass  # Nothing to do here
         sleep(0.5)
-    print("Message: ", messageCount)
-    print("Connect: ", connectCount)
-    print("Follow: ", followCount)
-    print("Pending: ", pendingCount)
+    sleep(1)
+
+    for a in connectLinkList:
+        if validators.url(a):
+            page.goto(a)
+            page.get_by_role("button", name="More actions").click()
+            while True:
+                page.keyboard.press("Tab")
+                button_text = page.evaluate("document.activeElement.innerText")
+                if button_text == "Connect":
+                    page.keyboard.press("Enter")
+                    break
+            page.get_by_text("Send without a note").click()
+            print("connected")
+            sleep(1)
